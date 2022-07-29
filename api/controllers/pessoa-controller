@@ -1,0 +1,108 @@
+const mongoose = require('mongoose');
+const PessoaModel = mongoose.model('Pessoa');
+
+module.exports ={
+    getAll: async (_req, res, _next) => {
+        try {
+            const pessoas = await PessoaModel.find().select("nome sobrenome telefone email status createdAt updatedAt _id");
+            res.status(200).json({
+                count: pessoas.length,
+                pessoas: pessoas.map(pessoa => {
+                    return {
+                        nome: pessoa.nome,
+                        sobrenome: pessoa.sobrenome,
+                        telefone: pessoa.telefone,
+                        email: pessoa.email,
+                        status: pessoa.status,
+                        createdAt: pessoa.createdAt,
+                        updatedAt: pessoa.updatedAt,
+                        _id: pessoa._id,
+                        request: {
+                            type: "GET",
+                            url: "https://localhost:3000/pessoas/" + pessoa._id
+                        }
+                    }
+                })
+            })
+        } catch (err) {
+            console.log(err);
+            res.status(500).json(err)
+        }
+    },
+    postPessoa: async (req, res, _next) => {
+        console.log(req.file);
+        try {
+            let pessoa = new PessoaModel({
+                nome: req.body.nome,
+                sobrenome: req.body.sobrenome,
+                telefone: req.body.telefone,
+                email: req.body.email,
+                status: req.body.status,
+            });
+    
+            await pessoa.save();
+    
+            res.status(200).json({
+                message: 'Pessoa criada com sucesso!',
+                createdProduct: {
+                    nome: pessoa.nome,
+                    sobrenome: pessoa.sobrenome,
+                    telefone: pessoa.telefone,
+                    email: pessoa.email,
+                    status: pessoa.status,
+                    _id: pessoa._id,
+                    request: {
+                        type: "GET",
+                        url: "https://localhost:3000/pessoa/" + pessoa._id
+                    }
+                }
+            })
+        } catch (err) {
+            console.log(err);
+            res.status(500).json(err)
+        }
+    },
+    getById: async (req, res, _next) => {
+        const id = req.params.pessoaId;
+        try {
+            const pessoa = await PessoaModel.findOne({ _id: id })
+            console.log(pessoa);
+            if (pessoa) {
+                res.status(200).json({
+                    message: 'Pessoa Id foi informado',
+                    createdUser: {
+                        nome: pessoa.nome,
+                        sobrenome: pessoa.sobrenome,
+                        telefone: pessoa.telefone,
+                        email: pessoa.email,
+                        status: pessoa.status,
+                        _id: pessoa._id
+                    }
+                })
+            } else {
+                res.status(404).json({
+                    message: "Pessoa not found"
+                })
+            }
+        } catch (err) {
+            console.log(err);
+            res.status(500).json(err)
+        }
+    },
+    deletePessoa: async (req, res, _next) => {
+        const id = req.params.pessoaId;
+    
+        try {
+            let status = await PessoaModel.deleteOne({ _id: id })
+    
+            res.status(200).json({
+                message: 'Pessoa excluída',
+                status: status
+            })
+    
+        } catch (err) {
+            console.log(err);
+            res.status(500).json(err)
+        }
+    }
+};
